@@ -222,11 +222,14 @@ class RequestMFAMethodDeactivationView(GenericAPIView):
         try:
             with transaction.atomic():
                 default_update_fields = ['is_active']
-                print("This needs fixing...")
 
                 if serializer.users_active_methods_count >= 2:
                     new_primary_obj = (
                         getattr(serializer, 'new_method')
+                        or MFAMethod.objects  # noqa
+                        .filter(user=request.user, is_active=True, is_primary=True)
+                        .exclude(id=self.obj.id)
+                        .first()
                         or MFAMethod.objects  # noqa
                         .filter(user=request.user, is_active=True)
                         .exclude(id=self.obj.id)
